@@ -4,3 +4,5 @@ __pycache__/
 .env
 keys/*.pem
 .test_keys/
+env/
+

@@ -1,82 +1,72 @@
-from fastapi import APIRouter, Depends
-from fastapi.security import OAuth2PasswordRequestForm
+from collections import defaultdict, deque
+from time import monotonic
 
-from app.schemas.user import TreasurerSignup, UserRead
-from app.schemas.auth import (
-    TokenResponse,
-    AuthResponse,
-    RefreshRequest,
-    ForgotPasswordRequest,
-    ResetPasswordRequest,
-)
-from app.services.auth_service import (
-    signup_treasurer,
-    authenticate,
-    issue_tokens,
-    refresh,
-    logout,
-    forgot_password,
-    reset_password,
-)
-from app.dependencies import DB
+from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
+from app.routers import auth, users, groups, contributions, loans, repayments, reports, finance
 
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+def parse_rate(value: str) -> tuple[int, int]:
+    try:
+        n, unit = value.split("/", 1)
+        seconds = {"second": 1, "minute": 60, "hour": 3600, "day": 86400}[unit.rstrip("s").lower()]
+        limit = int(n)
+        if limit <= 0:
+            raise ValueError
+        return limit, seconds
+    except (ValueError, KeyError) as exc:
+        raise RuntimeError("RATE_LIMIT must look like '100/minute'.") from exc
 
 
-def token_response(tokens):
-    return TokenResponse(
-        access_token=tokens[0],
-        refresh_token=tokens[1],
-        expires_in=settings.access_token_expire_minutes * 60,
-    )
+_LIMIT, _WINDOW = parse_rate(settings.rate_limit)
+_hits = defaultdict(deque)
 
 
-@router.post("/signup", response_model=AuthResponse)
-def signup(data: TreasurerSignup, db: DB):
-    user = signup_treasurer(db, data)
-    tokens = issue_tokens(db, user)
-    return AuthResponse(
-        user=user,
-        tokens=token_response(tokens),
-    )
+def rate_limit(request: Request):
+    """Synchronous global API rate-limit dependency."""
+    if request.method == "OPTIONS" or request.url.path.startswith(("/docs", "/openapi.json")):
+        return None
+
+    key = f"{request.client.host if request.client else 'unknown'}:{request.url.path}"
+    now = monotonic()
+    queue = _hits[key]
+    while queue and queue[0] <= now - _WINDOW:
+        queue.popleft()
+
+    if len(queue) >= _LIMIT:
+        raise HTTPException(status_code=429, detail="Rate limit exceeded")
+
+    queue.append(now)
+    return None
 
 
-@router.post("/login", response_model=AuthResponse)
-def login(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: DB = None,
-):
-    user = authenticate(
-        db,
-        form_data.username,
-        form_data.password,
-    )
+app = FastAPI(
+    title=settings.app_name,
+    version="1.0.0",
+    dependencies=[Depends(rate_limit)],
+)
 
-    tokens = issue_tokens(db, user)
-
-    return AuthResponse(
-        user=user,
-        tokens=token_response(tokens),
-    )
+allowed_origins = [origin.strip() for origin in settings.frontend_url.split(",") if origin.strip()]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
-@router.post("/refresh", response_model=TokenResponse)
-def refresh_token(data: RefreshRequest, db: DB):
-    return token_response(refresh(db, data.refresh_token))
+@app.get("/health")
+def health():
+    return {"status": "ok"}
 
 
-@router.post("/logout", status_code=204)
-def logout_endpoint(data: RefreshRequest, db: DB):
-    logout(db, data.refresh_token)
-
-
-@router.post("/forgot-password", status_code=202)
-def forgot(data: ForgotPasswordRequest, db: DB):
-    forgot_password(db, data.email)
-
-
-@router.post("/reset-password", status_code=204)
-def reset(data: ResetPasswordRequest, db: DB):
-    reset_password(db, data.token, data.new_password)
+app.include_router(auth.router, prefix="/api/v1")
+app.include_router(users.router, prefix="/api/v1")
+app.include_router(groups.router, prefix="/api/v1")
+app.include_router(contributions.router, prefix="/api/v1")
+app.include_router(loans.router, prefix="/api/v1")
+app.include_router(repayments.router, prefix="/api/v1")
+app.include_router(reports.router, prefix="/api/v1")
+app.include_router(finance.router, prefix="/api/v1")
