@@ -1,15 +1,15 @@
-
 from datetime import datetime, timedelta, timezone
 import hashlib
 import secrets
 
 import jwt
 from pwdlib import PasswordHash
+from pwdlib.hashers.argon2 import Argon2Hasher
 
 from app.core.config import settings
 
 
-password_hash = PasswordHash.recommended()
+password_hash = PasswordHash(hashers=[Argon2Hasher()])
 
 
 def hash_password(password: str) -> str:
@@ -65,4 +65,3 @@ def decode_token(token: str) -> dict:
 
 def new_random_token() -> str:
     return secrets.token_urlsafe(48)
-
