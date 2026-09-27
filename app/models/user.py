@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum
 from sqlalchemy import String, Boolean, DateTime, Enum as SAEnum, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
-from app.database import Base
+from database import Base
 class UserRole(str, Enum): TREASURER="TREASURER"; MEMBER="MEMBER"
 class User(Base):
     __tablename__="users"

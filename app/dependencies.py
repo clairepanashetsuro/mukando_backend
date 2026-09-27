@@ -6,7 +6,7 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
 from app.core.security import decode_token
-from app.database import get_db
+from database import get_db
 
 
 oauth2_scheme = OAuth2PasswordBearer(

@@ -1,4 +1,4 @@
-from app.database import Base, SessionLocal, engine
+from database import Base, SessionLocal, engine
 from app.schemas.user import TreasurerSignup
 from app.services.auth_service import signup_treasurer
 

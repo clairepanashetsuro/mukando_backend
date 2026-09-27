@@ -23,9 +23,9 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.pool import StaticPool
 
-from app.database import Base
+from database import Base
 from app.dependencies import get_db
-from app.main import app
+from main import app
 
 engine = create_engine(
     "sqlite://",
