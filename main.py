@@ -1,22 +1,44 @@
+
 from collections import defaultdict, deque
 from time import monotonic
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+
 from app.core.config import settings
-from app.routers import auth, users, groups, contributions, loans, repayments, reports, finance
+from app.routers import (
+    auth,
+    users,
+    groups,
+    contributions,
+    loans,
+    repayments,
+    reports,
+    finance,
+)
 
 
 def parse_rate(value: str) -> tuple[int, int]:
     try:
         n, unit = value.split("/", 1)
-        seconds = {"second": 1, "minute": 60, "hour": 3600, "day": 86400}[unit.rstrip("s").lower()]
+        seconds = {
+            "second": 1,
+            "minute": 60,
+            "hour": 3600,
+            "day": 86400,
+        }[unit.rstrip("s").lower()]
+
         limit = int(n)
+
         if limit <= 0:
             raise ValueError
+
         return limit, seconds
+
     except (ValueError, KeyError) as exc:
-        raise RuntimeError("RATE_LIMIT must look like '100/minute'.") from exc
+        raise RuntimeError(
+            "RATE_LIMIT must look like '100/minute'."
+        ) from exc
 
 
 _LIMIT, _WINDOW = parse_rate(settings.rate_limit)
@@ -24,20 +46,30 @@ _hits = defaultdict(deque)
 
 
 def rate_limit(request: Request):
-    """Synchronous global API rate-limit dependency."""
-    if request.method == "OPTIONS" or request.url.path.startswith(("/docs", "/openapi.json")):
+    if request.method == "OPTIONS" or request.url.path.startswith(
+        ("/docs", "/openapi.json")
+    ):
         return None
 
-    key = f"{request.client.host if request.client else 'unknown'}:{request.url.path}"
+    key = (
+        f"{request.client.host if request.client else 'unknown'}:"
+        f"{request.url.path}"
+    )
+
     now = monotonic()
     queue = _hits[key]
+
     while queue and queue[0] <= now - _WINDOW:
         queue.popleft()
 
     if len(queue) >= _LIMIT:
-        raise HTTPException(status_code=429, detail="Rate limit exceeded")
+        raise HTTPException(
+            status_code=429,
+            detail="Rate limit exceeded",
+        )
 
     queue.append(now)
+
     return None
 
 
@@ -47,7 +79,21 @@ app = FastAPI(
     dependencies=[Depends(rate_limit)],
 )
 
-allowed_origins = [origin.strip() for origin in settings.frontend_url.split(",") if origin.strip()]
+configured_origins = [
+    origin.strip()
+    for origin in settings.frontend_url.split(",")
+    if origin.strip()
+]
+
+allowed_origins = list(
+    dict.fromkeys(
+        configured_origins
+        + [
+            "http://localhost:3000",
+        ]
+    )
+)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
@@ -70,3 +116,4 @@ app.include_router(loans.router, prefix="/api/v1")
 app.include_router(repayments.router, prefix="/api/v1")
 app.include_router(reports.router, prefix="/api/v1")
 app.include_router(finance.router, prefix="/api/v1")
+
