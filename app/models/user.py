@@ -1,8 +1,13 @@
 from datetime import datetime
 from enum import Enum
-from sqlalchemy import String, Boolean, DateTime, Enum as SAEnum, ForeignKey
+
+from sqlalchemy import Boolean, DateTime, ForeignKey, String
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column
+
 from database import Base
+
+
 class UserRole(str, Enum): TREASURER="TREASURER"; MEMBER="MEMBER"
 class User(Base):
     __tablename__="users"

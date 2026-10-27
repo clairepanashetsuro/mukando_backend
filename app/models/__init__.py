@@ -1,7 +1,9 @@
-from .user import User, UserRole
-from .group import Group
-from .contribution import Contribution
-from .loan import Loan, LoanStatus
-from .repayment import Repayment
-from .refresh_token import RefreshToken
-from .password_reset_token import PasswordResetToken
+from .contribution import Contribution as Contribution
+from .group import Group as Group
+from .loan import Loan as Loan
+from .loan import LoanStatus as LoanStatus
+from .password_reset_token import PasswordResetToken as PasswordResetToken
+from .refresh_token import RefreshToken as RefreshToken
+from .repayment import Repayment as Repayment
+from .user import User as User
+from .user import UserRole as UserRole

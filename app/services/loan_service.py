@@ -1,11 +1,15 @@
-from decimal import Decimal
 from datetime import date
+from decimal import Decimal
+
 from fastapi import HTTPException
-from sqlalchemy import select, func
-from app.models.user import User, UserRole
+from sqlalchemy import func, select
+
 from app.models.contribution import Contribution
 from app.models.loan import Loan, LoanStatus
 from app.models.repayment import Repayment
+from app.models.user import User, UserRole
+
+
 def loan_balance(db,loan):
     paid=(db.execute(select(func.coalesce(func.sum(Repayment.amount),0)).where(Repayment.loan_id==loan.id))).scalar_one()
     base=Decimal(str(loan.principal))+Decimal(str(loan.interest_amount))-Decimal(str(paid))
@@ -17,9 +21,9 @@ def create(db,treasurer,data):
     member=(db.execute(select(User).where(User.id==data.member_id,User.group_id==treasurer.group_id,User.role==UserRole.MEMBER))).scalar_one_or_none()
     if not member: raise HTTPException(404,"Member not found in your group")
     contributions=Decimal(str((db.execute(select(func.coalesce(func.sum(Contribution.amount),0)).where(Contribution.member_id==member.id))).scalar_one()))
-    max_loan=contributions*Decimal('2')
+    max_loan=contributions*Decimal(2)
     active=(db.execute(select(Loan).where(Loan.member_id==member.id,Loan.status==LoanStatus.ACTIVE))).scalars().all()
-    existing=Decimal('0')
+    existing=Decimal(0)
     for l in active: existing += loan_balance(db,l)
     principal=Decimal(str(data.principal))
     if principal <= 0: raise HTTPException(400,"Principal must be positive")

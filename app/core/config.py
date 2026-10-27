@@ -9,7 +9,7 @@ class Settings(BaseSettings):
     app_name: str = "Mukando API"
     environment: str = "development"
 
-    # Database URLs
+    
     database_url: str = ""
     database_url_local: str = "postgresql+psycopg://postgres:postgres@localhost:5432/mukando"
     database_url_production: str = ""
@@ -70,7 +70,7 @@ class Settings(BaseSettings):
 
             return self.database_url_local
 
-        # Development/local fallback
+        
         return self.database_url_local
 
     @staticmethod

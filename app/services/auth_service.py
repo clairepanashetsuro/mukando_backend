@@ -1,24 +1,22 @@
-
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException
+from jwt.exceptions import InvalidTokenError
 from sqlalchemy import select
 
-from app.models.user import User, UserRole
-from app.models.group import Group
-from app.models.refresh_token import RefreshToken
-from app.models.password_reset_token import PasswordResetToken
-
+from app.core.config import settings
 from app.core.security import (
-    hash_password,
-    verify_password,
     create_token,
+    decode_token,
+    hash_password,
     hash_token,
     new_random_token,
-    decode_token,
+    verify_password,
 )
-
-from app.core.config import settings
+from app.models.group import Group
+from app.models.password_reset_token import PasswordResetToken
+from app.models.refresh_token import RefreshToken
+from app.models.user import User, UserRole
 from app.services.email_service import send_password_reset_email
 
 
@@ -30,11 +28,8 @@ def _expired(value):
 
 
 def signup_treasurer(db, data):
-    # Check whether email already exists
     existing_user = (
-        db.execute(
-            select(User).where(User.email == data.email)
-        )
+        db.execute(select(User).where(User.email == data.email))
         .scalar_one_or_none()
     )
 
@@ -44,11 +39,8 @@ def signup_treasurer(db, data):
             detail="Email already registered",
         )
 
-    # Check whether group name already exists
     existing_group = (
-        db.execute(
-            select(Group).where(Group.name == data.group_name)
-        )
+        db.execute(select(Group).where(Group.name == data.group_name))
         .scalar_one_or_none()
     )
 
@@ -83,9 +75,7 @@ def signup_treasurer(db, data):
 
 def authenticate(db, email, password):
     user = (
-        db.execute(
-            select(User).where(User.email == email)
-        )
+        db.execute(select(User).where(User.email == email))
         .scalar_one_or_none()
     )
 
@@ -108,14 +98,14 @@ def authenticate(db, email, password):
 
 
 def issue_tokens(db, user):
-    access, access_exp = create_token(
+    access, _access_exp = create_token(
         str(user.id),
         user.role.value,
         "access",
         settings.access_token_expire_minutes,
     )
 
-    refresh, refresh_exp = create_token(
+    refresh, _refresh_exp = create_token(
         str(user.id),
         user.role.value,
         "refresh",
@@ -126,7 +116,7 @@ def issue_tokens(db, user):
         RefreshToken(
             user_id=user.id,
             token_hash=hash_token(refresh),
-            expires_at=refresh_exp,
+            expires_at=_refresh_exp,
         )
     )
 
@@ -138,11 +128,11 @@ def issue_tokens(db, user):
 def refresh(db, token):
     try:
         payload = decode_token(token)
-    except Exception:
+    except (InvalidTokenError, ValueError, KeyError, TypeError):
         raise HTTPException(
             status_code=401,
             detail="Invalid or expired refresh token",
-        )
+        ) from None
 
     if payload.get("type") != "refresh":
         raise HTTPException(
@@ -166,11 +156,7 @@ def refresh(db, token):
         )
 
     user = (
-        db.execute(
-            select(User).where(
-                User.id == int(payload["sub"])
-            )
-        )
+        db.execute(select(User).where(User.id == int(payload["sub"])))
         .scalar_one_or_none()
     )
 
@@ -203,24 +189,17 @@ def logout(db, token):
 
 def forgot_password(db, email):
     user = (
-        db.execute(
-            select(User).where(User.email == email)
-        )
+        db.execute(select(User).where(User.email == email))
         .scalar_one_or_none()
     )
 
-    # Do not reveal whether an email exists
     if not user:
         return
 
-    # Generate a dedicated password-reset token
     raw_token = new_random_token()
 
-    expires_at = (
-        datetime.now(timezone.utc)
-        + timedelta(
-            minutes=settings.password_reset_expire_minutes
-        )
+    expires_at = datetime.now(timezone.utc) + timedelta(
+        minutes=settings.password_reset_expire_minutes
     )
 
     reset_token = PasswordResetToken(
@@ -233,8 +212,6 @@ def forgot_password(db, email):
     db.add(reset_token)
     db.commit()
 
-    # Send the raw token to the user's email.
-    # Only the hash is stored in the database.
     send_password_reset_email(
         email,
         raw_token,
@@ -242,8 +219,6 @@ def forgot_password(db, email):
 
 
 def reset_password(db, token, new_password):
-    # Hash the token supplied by the user and
-    # compare it with the stored hash.
     row = (
         db.execute(
             select(PasswordResetToken).where(
@@ -253,7 +228,6 @@ def reset_password(db, token, new_password):
         .scalar_one_or_none()
     )
 
-    # Token must exist, not be used, and not be expired.
     if not row or row.used or _expired(row.expires_at):
         raise HTTPException(
             status_code=400,
@@ -261,11 +235,7 @@ def reset_password(db, token, new_password):
         )
 
     user = (
-        db.execute(
-            select(User).where(
-                User.id == row.user_id
-            )
-        )
+        db.execute(select(User).where(User.id == row.user_id))
         .scalar_one_or_none()
     )
 
@@ -275,18 +245,12 @@ def reset_password(db, token, new_password):
             detail="User not found",
         )
 
-    # Set the new password
     user.password_hash = hash_password(new_password)
 
-    # A successful reset also satisfies
-    # any pending first-login password requirement.
     user.must_change_password = False
 
-    # Make the reset token single-use.
     row.used = True
 
-    # Revoke existing refresh tokens.
-    # This forces existing sessions to authenticate again.
     refresh_tokens = (
         db.execute(
             select(RefreshToken).where(
@@ -302,4 +266,3 @@ def reset_password(db, token, new_password):
         refresh_token.revoked = True
 
     db.commit()
-

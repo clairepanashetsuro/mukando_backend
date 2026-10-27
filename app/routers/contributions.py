@@ -1,17 +1,25 @@
 from math import ceil
+
 from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy import select
+
 from app.dependencies import DB, CurrentUser
 from app.models.contribution import Contribution
 from app.models.user import UserRole
-from app.schemas.contribution import ContributionCreate, ContributionRead, ContributionUpdate
+from app.schemas.contribution import (
+    ContributionCreate,
+    ContributionPage,
+    ContributionRead,
+    ContributionUpdate,
+)
 from app.services.contribution_service import create
+
 router=APIRouter(prefix='/contributions',tags=['contributions'])
 @router.post('',response_model=ContributionRead)
 def create_contribution(data:ContributionCreate,db:DB,user:CurrentUser):
     if user.role!=UserRole.TREASURER: raise HTTPException(403,'Only the treasurer can record contributions')
     return create(db,user,data)
-@router.get('',response_model=dict)
+@router.get('', response_model=ContributionPage)
 def list_contributions(db:DB,user:CurrentUser,page:int=Query(1,ge=1),size:int=Query(20,ge=1,le=100)):
     q=select(Contribution).where(Contribution.group_id==user.group_id).order_by(Contribution.paid_at.desc(), Contribution.id.desc());
     if user.role==UserRole.MEMBER: q=q.where(Contribution.member_id==user.id)

@@ -8,13 +8,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.routers import (
     auth,
-    users,
-    groups,
     contributions,
+    finance,
+    groups,
     loans,
     repayments,
     reports,
-    finance,
+    users,
 )
 
 
@@ -49,7 +49,7 @@ def rate_limit(request: Request):
     if request.method == "OPTIONS" or request.url.path.startswith(
         ("/docs", "/openapi.json")
     ):
-        return None
+        return
 
     key = (
         f"{request.client.host if request.client else 'unknown'}:"
@@ -70,7 +70,7 @@ def rate_limit(request: Request):
 
     queue.append(now)
 
-    return None
+    return
 
 
 app = FastAPI(

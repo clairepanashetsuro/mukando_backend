@@ -1,10 +1,13 @@
 from decimal import Decimal
-from datetime import date
+
 from fastapi import HTTPException
-from sqlalchemy import select, func
+from sqlalchemy import select
+
 from app.models.loan import Loan, LoanStatus
 from app.models.repayment import Repayment
 from app.services.loan_service import loan_balance
+
+
 def create(db,treasurer,data):
     loan=(db.execute(select(Loan).where(Loan.id==data.loan_id,Loan.group_id==treasurer.group_id))).scalar_one_or_none()
     if not loan: raise HTTPException(404,"Loan not found in your group")

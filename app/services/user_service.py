@@ -2,12 +2,12 @@
 from fastapi import HTTPException
 from sqlalchemy import select
 
-from app.models.user import User, UserRole
 from app.core.security import hash_password, verify_password
+from app.models.user import User, UserRole
 
 
 def create_member(db, treasurer, data):
-    # Make sure the email is not already registered.
+    
     existing_user = (
         db.execute(
             select(User).where(User.email == data.email)
@@ -21,8 +21,8 @@ def create_member(db, treasurer, data):
             detail="Email already registered",
         )
 
-    # Members are created with a temporary password.
-    # They must change this password after their first login.
+    
+    
     user = User(
         full_name=data.full_name,
         email=data.email,
@@ -40,7 +40,7 @@ def create_member(db, treasurer, data):
 
 
 def update_profile(db, user, data):
-    # Prevent two users from having the same email.
+    
     if (
         data.email
         and data.email != user.email
@@ -59,7 +59,7 @@ def update_profile(db, user, data):
             detail="Email already registered",
         )
 
-    # Update only fields supplied by the client.
+    
     for key, value in data.model_dump(exclude_unset=True).items():
         setattr(user, key, value)
 
@@ -70,7 +70,7 @@ def update_profile(db, user, data):
 
 
 def change_password(db, user, current_password, new_password):
-    # The user must know their current password.
+    
     if not verify_password(
         current_password,
         user.password_hash,
@@ -80,11 +80,11 @@ def change_password(db, user, current_password, new_password):
             detail="Current password is incorrect",
         )
 
-    # Store only the hashed version of the new password.
+    
     user.password_hash = hash_password(new_password)
 
-    # This also completes the initial member password-change
-    # requirement if the user was created with a temporary password.
+    
+    
     user.must_change_password = False
 
     db.commit()

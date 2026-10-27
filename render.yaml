@@ -28,3 +28,8 @@ services:
       - key: JWT_PUBLIC_KEY
         sync: false
 
+      - key: REDIS_URL
+        sync: false
+
+      - key: TRUST_PROXY_HEADERS
+        value: "true"

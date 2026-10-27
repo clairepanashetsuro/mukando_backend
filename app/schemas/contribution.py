@@ -1,4 +1,5 @@
 from datetime import date
+
 from pydantic import BaseModel, ConfigDict, Field
 
 
@@ -15,9 +16,18 @@ class ContributionUpdate(BaseModel):
 
 class ContributionRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
+
     id: int
     member_id: int
     group_id: int
     amount: float
     paid_at: date
     recorded_by: int
+
+
+class ContributionPage(BaseModel):
+    items: list[ContributionRead]
+    total: int
+    page: int
+    size: int
+    pages: int

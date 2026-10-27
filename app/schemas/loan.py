@@ -1,5 +1,7 @@
 from datetime import date
+
 from pydantic import BaseModel, ConfigDict, Field
+
 from app.models.loan import LoanStatus
 
 
@@ -16,6 +18,7 @@ class LoanUpdate(BaseModel):
 
 class LoanRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
+
     id: int
     member_id: int
     group_id: int
@@ -24,3 +27,11 @@ class LoanRead(BaseModel):
     interest_amount: float
     due_date: date
     status: LoanStatus
+
+
+class LoanPage(BaseModel):
+    items: list[LoanRead]
+    total: int
+    page: int
+    size: int
+    pages: int

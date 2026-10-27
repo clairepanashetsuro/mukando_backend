@@ -1,7 +1,11 @@
 from datetime import date, datetime
-from sqlalchemy import Date, Numeric, DateTime, ForeignKey
+
+from sqlalchemy import Date, DateTime, ForeignKey, Numeric
 from sqlalchemy.orm import Mapped, mapped_column
+
 from database import Base
+
+
 class Repayment(Base):
     __tablename__="repayments"
     id: Mapped[int]=mapped_column(primary_key=True)

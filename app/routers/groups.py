@@ -4,8 +4,8 @@ from sqlalchemy import select
 from app.dependencies import DB, CurrentUser
 from app.models.group import Group
 from app.models.user import UserRole
-from app.schemas.group import GroupRead, GroupUpdate
 from app.repositories.group_repository import group_repository
+from app.schemas.group import GroupRead, GroupUpdate
 
 router = APIRouter(prefix="/groups", tags=["groups"])
 

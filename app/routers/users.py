@@ -1,4 +1,3 @@
-
 from math import ceil
 
 from fastapi import APIRouter, HTTPException, Query
@@ -7,15 +6,15 @@ from sqlalchemy import select
 from app.dependencies import DB, CurrentUser
 from app.models.user import User, UserRole
 from app.schemas.user import (
+    MemberCreate,
+    PasswordChange,
     UserRead,
     UserUpdate,
-    PasswordChange,
-    MemberCreate,
 )
 from app.services.user_service import (
-    update_profile,
     change_password,
     create_member,
+    update_profile,
 )
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -93,7 +92,10 @@ def members(
     )
 
     return {
-        "items": items,
+        "items": [
+            UserRead.model_validate(member)
+            for member in items
+        ],
         "total": total,
         "page": page,
         "size": size,
@@ -182,4 +184,3 @@ def delete_member(
 
     obj.is_active = False
     db.commit()
-

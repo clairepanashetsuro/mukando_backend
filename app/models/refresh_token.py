@@ -1,7 +1,11 @@
 from datetime import datetime
-from sqlalchemy import String, DateTime, ForeignKey, Boolean
+
+from sqlalchemy import Boolean, DateTime, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column
+
 from database import Base
+
+
 class RefreshToken(Base):
     __tablename__="refresh_tokens"
     id: Mapped[int]=mapped_column(primary_key=True)

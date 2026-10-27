@@ -1,17 +1,20 @@
 from math import ceil
+
 from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy import select
+
 from app.dependencies import DB, CurrentUser
-from app.models.loan import Loan, LoanStatus
+from app.models.loan import Loan
 from app.models.user import UserRole
-from app.schemas.loan import LoanCreate, LoanRead, LoanUpdate
+from app.schemas.loan import LoanCreate, LoanPage, LoanRead, LoanUpdate
 from app.services.loan_service import create, loan_balance
+
 router=APIRouter(prefix='/loans',tags=['loans'])
 @router.post('',response_model=LoanRead)
 def create_loan(data:LoanCreate,db:DB,user:CurrentUser):
     if user.role!=UserRole.TREASURER: raise HTTPException(403,'Treasurer access required')
     return create(db,user,data)
-@router.get('',response_model=dict)
+@router.get('', response_model=LoanPage)
 def list_loans(db:DB,user:CurrentUser,page:int=Query(1,ge=1),size:int=Query(20,ge=1,le=100)):
     q=select(Loan).where(Loan.group_id==user.group_id).order_by(Loan.id.desc());
     if user.role==UserRole.MEMBER: q=q.where(Loan.member_id==user.id)

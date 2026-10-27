@@ -1,8 +1,13 @@
 from datetime import date, datetime
 from enum import Enum
-from sqlalchemy import Date, Numeric, DateTime, ForeignKey, Enum as SAEnum
+
+from sqlalchemy import Date, DateTime, ForeignKey, Numeric
+from sqlalchemy import Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column
+
 from database import Base
+
+
 class LoanStatus(str, Enum): ACTIVE="ACTIVE"; PAID="PAID"; DEFAULTED="DEFAULTED"
 class Loan(Base):
     __tablename__="loans"

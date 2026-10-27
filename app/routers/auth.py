@@ -2,29 +2,25 @@
 from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 
-from app.schemas.user import TreasurerSignup
-
-from app.schemas.auth import (
-    TokenResponse,
-    AuthResponse,
-    RefreshRequest,
-    ForgotPasswordRequest,
-    ResetPasswordRequest,
-)
-
-from app.services.auth_service import (
-    signup_treasurer,
-    authenticate,
-    issue_tokens,
-    refresh,
-    logout,
-    forgot_password,
-    reset_password,
-)
-
-from app.dependencies import DB
 from app.core.config import settings
-
+from app.dependencies import DB
+from app.schemas.auth import (
+    AuthResponse,
+    ForgotPasswordRequest,
+    RefreshRequest,
+    ResetPasswordRequest,
+    TokenResponse,
+)
+from app.schemas.user import TreasurerSignup
+from app.services.auth_service import (
+    authenticate,
+    forgot_password,
+    issue_tokens,
+    logout,
+    refresh,
+    reset_password,
+    signup_treasurer,
+)
 
 router = APIRouter(
     prefix="/auth",

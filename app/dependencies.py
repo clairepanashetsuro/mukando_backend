@@ -1,18 +1,15 @@
-
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
+from jwt.exceptions import InvalidTokenError
 from sqlalchemy.orm import Session
 
 from app.core.security import decode_token
+from app.repositories.user_repository import user_repository
 from database import get_db
 
-
-oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="/api/v1/auth/login"
-)
-
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 DB = Annotated[Session, Depends(get_db)]
 
 
@@ -21,45 +18,27 @@ def current_user(
     db: DB,
 ):
     try:
-        # Decode and verify the JWT.
         payload = decode_token(token)
-
-        # Make sure this is an access token,
-        # not a refresh token or another token type.
         if payload.get("type") != "access":
-            raise ValueError(
-                f"Wrong token type: {payload.get('type')}"
-            )
-
-        # Get the user ID from the JWT subject.
+            raise ValueError("Invalid token type")
         user_id = int(payload["sub"])
-
-    except Exception as e:
-        # Temporarily expose the actual JWT error
-        # so we can identify the cause.
+    except (InvalidTokenError, ValueError, KeyError, TypeError):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail=f"Token error: {str(e)}",
-            headers={
-                "WWW-Authenticate": "Bearer"
-            },
-        )
+            detail="Invalid or expired access token",
+            headers={"WWW-Authenticate": "Bearer"},
+        ) from None
 
-    # Load the user from the database.
-    from app.repositories.user_repository import user_repository
+    
 
     user = user_repository.get(db, user_id)
 
-    # Make sure the user still exists and is active.
     if not user or not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found or inactive",
-            headers={
-                "WWW-Authenticate": "Bearer"
-            },
+            headers={"WWW-Authenticate": "Bearer"},
         )
-
     return user
 
 
@@ -76,8 +55,6 @@ def require_role(role: str):
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Insufficient permissions",
             )
-
         return user
 
     return dependency
-

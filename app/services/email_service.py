@@ -1,6 +1,9 @@
 import smtplib
 from email.message import EmailMessage
+
 from app.core.config import settings
+
+
 def send_password_reset_email(email: str, token: str):
     if not settings.smtp_host:
         print(f"[DEV] Password reset URL for {email}: {settings.frontend_url}/reset-password?token={token}")

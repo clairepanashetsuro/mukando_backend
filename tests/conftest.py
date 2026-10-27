@@ -1,6 +1,13 @@
 import os
+import pytest
+from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.pool import StaticPool
 
-# Tests are completely synchronous and isolated from a developer's database.
+from app.dependencies import get_db
+from database import Base
+from main import app
+
 os.environ["ENVIRONMENT"] = "test"
 os.environ["DATABASE_URL"] = "sqlite://"
 
@@ -18,14 +25,7 @@ os.environ["JWT_PUBLIC_KEY"] = _private.public_key().public_bytes(
     serialization.PublicFormat.SubjectPublicKeyInfo,
 ).decode()
 
-import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.pool import StaticPool
 
-from database import Base
-from app.dependencies import get_db
-from main import app
 
 engine = create_engine(
     "sqlite://",
@@ -46,7 +46,7 @@ app.dependency_overrides[get_db] = override_db
 
 @pytest.fixture(autouse=True)
 def db():
-    import app.models  # noqa: F401
+    import app.models  
 
     Base.metadata.create_all(bind=engine)
     yield

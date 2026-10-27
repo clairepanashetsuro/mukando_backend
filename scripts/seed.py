@@ -1,6 +1,6 @@
-from database import Base, SessionLocal, engine
 from app.schemas.user import TreasurerSignup
 from app.services.auth_service import signup_treasurer
+from database import Base, SessionLocal, engine
 
 
 def main():
