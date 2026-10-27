@@ -3,5 +3,8 @@ from app.repositories.base import BaseRepository
 
 
 class RepaymentRepository(BaseRepository):
-    def __init__(self): super().__init__(Repayment)
+    def __init__(self):
+        super().__init__(Repayment)
+
+
 repayment_repository = RepaymentRepository()

@@ -1,4 +1,3 @@
-
 def test_member_cannot_record_contribution(client):
     payload = {
         "full_name": "Treasurer",
@@ -17,9 +16,7 @@ def test_member_cannot_record_contribution(client):
 
     auth = signup.json()
 
-    headers = {
-        "Authorization": f"Bearer {auth['tokens']['access_token']}"
-    }
+    headers = {"Authorization": f"Bearer {auth['tokens']['access_token']}"}
 
     member_response = client.post(
         "/api/v1/users/members",
@@ -47,9 +44,7 @@ def test_member_cannot_record_contribution(client):
 
     member_auth = login.json()
 
-    member_headers = {
-        "Authorization": f"Bearer {member_auth['access_token']}"
-    }
+    member_headers = {"Authorization": f"Bearer {member_auth['access_token']}"}
 
     response = client.post(
         "/api/v1/contributions",
@@ -62,4 +57,3 @@ def test_member_cannot_record_contribution(client):
     )
 
     assert response.status_code == 403
-

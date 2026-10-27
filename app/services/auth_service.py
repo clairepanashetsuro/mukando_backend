@@ -28,10 +28,9 @@ def _expired(value):
 
 
 def signup_treasurer(db, data):
-    existing_user = (
-        db.execute(select(User).where(User.email == data.email))
-        .scalar_one_or_none()
-    )
+    existing_user = db.execute(
+        select(User).where(User.email == data.email)
+    ).scalar_one_or_none()
 
     if existing_user:
         raise HTTPException(
@@ -39,10 +38,9 @@ def signup_treasurer(db, data):
             detail="Email already registered",
         )
 
-    existing_group = (
-        db.execute(select(Group).where(Group.name == data.group_name))
-        .scalar_one_or_none()
-    )
+    existing_group = db.execute(
+        select(Group).where(Group.name == data.group_name)
+    ).scalar_one_or_none()
 
     if existing_group:
         raise HTTPException(
@@ -74,10 +72,7 @@ def signup_treasurer(db, data):
 
 
 def authenticate(db, email, password):
-    user = (
-        db.execute(select(User).where(User.email == email))
-        .scalar_one_or_none()
-    )
+    user = db.execute(select(User).where(User.email == email)).scalar_one_or_none()
 
     if not user or not verify_password(
         password,
@@ -140,14 +135,9 @@ def refresh(db, token):
             detail="Invalid refresh token",
         )
 
-    rt = (
-        db.execute(
-            select(RefreshToken).where(
-                RefreshToken.token_hash == hash_token(token)
-            )
-        )
-        .scalar_one_or_none()
-    )
+    rt = db.execute(
+        select(RefreshToken).where(RefreshToken.token_hash == hash_token(token))
+    ).scalar_one_or_none()
 
     if not rt or rt.revoked or _expired(rt.expires_at):
         raise HTTPException(
@@ -155,10 +145,9 @@ def refresh(db, token):
             detail="Refresh token revoked or expired",
         )
 
-    user = (
-        db.execute(select(User).where(User.id == int(payload["sub"])))
-        .scalar_one_or_none()
-    )
+    user = db.execute(
+        select(User).where(User.id == int(payload["sub"]))
+    ).scalar_one_or_none()
 
     if not user or not user.is_active:
         raise HTTPException(
@@ -173,14 +162,9 @@ def refresh(db, token):
 
 
 def logout(db, token):
-    rt = (
-        db.execute(
-            select(RefreshToken).where(
-                RefreshToken.token_hash == hash_token(token)
-            )
-        )
-        .scalar_one_or_none()
-    )
+    rt = db.execute(
+        select(RefreshToken).where(RefreshToken.token_hash == hash_token(token))
+    ).scalar_one_or_none()
 
     if rt:
         rt.revoked = True
@@ -188,10 +172,7 @@ def logout(db, token):
 
 
 def forgot_password(db, email):
-    user = (
-        db.execute(select(User).where(User.email == email))
-        .scalar_one_or_none()
-    )
+    user = db.execute(select(User).where(User.email == email)).scalar_one_or_none()
 
     if not user:
         return
@@ -219,14 +200,11 @@ def forgot_password(db, email):
 
 
 def reset_password(db, token, new_password):
-    row = (
-        db.execute(
-            select(PasswordResetToken).where(
-                PasswordResetToken.token_hash == hash_token(token)
-            )
+    row = db.execute(
+        select(PasswordResetToken).where(
+            PasswordResetToken.token_hash == hash_token(token)
         )
-        .scalar_one_or_none()
-    )
+    ).scalar_one_or_none()
 
     if not row or row.used or _expired(row.expires_at):
         raise HTTPException(
@@ -234,10 +212,7 @@ def reset_password(db, token, new_password):
             detail="Invalid or expired reset token",
         )
 
-    user = (
-        db.execute(select(User).where(User.id == row.user_id))
-        .scalar_one_or_none()
-    )
+    user = db.execute(select(User).where(User.id == row.user_id)).scalar_one_or_none()
 
     if not user:
         raise HTTPException(

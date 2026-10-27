@@ -1,4 +1,3 @@
-
 from collections import defaultdict, deque
 from time import monotonic
 
@@ -36,9 +35,7 @@ def parse_rate(value: str) -> tuple[int, int]:
         return limit, seconds
 
     except (ValueError, KeyError) as exc:
-        raise RuntimeError(
-            "RATE_LIMIT must look like '100/minute'."
-        ) from exc
+        raise RuntimeError("RATE_LIMIT must look like '100/minute'.") from exc
 
 
 _LIMIT, _WINDOW = parse_rate(settings.rate_limit)
@@ -51,10 +48,7 @@ def rate_limit(request: Request):
     ):
         return
 
-    key = (
-        f"{request.client.host if request.client else 'unknown'}:"
-        f"{request.url.path}"
-    )
+    key = f"{request.client.host if request.client else 'unknown'}:{request.url.path}"
 
     now = monotonic()
     queue = _hits[key]
@@ -80,9 +74,7 @@ app = FastAPI(
 )
 
 configured_origins = [
-    origin.strip()
-    for origin in settings.frontend_url.split(",")
-    if origin.strip()
+    origin.strip() for origin in settings.frontend_url.split(",") if origin.strip()
 ]
 
 allowed_origins = list(
@@ -116,4 +108,3 @@ app.include_router(loans.router, prefix="/api/v1")
 app.include_router(repayments.router, prefix="/api/v1")
 app.include_router(reports.router, prefix="/api/v1")
 app.include_router(finance.router, prefix="/api/v1")
-

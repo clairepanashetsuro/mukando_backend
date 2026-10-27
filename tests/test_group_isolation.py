@@ -1,4 +1,3 @@
-
 def test_member_is_scoped_to_treasurer_group(client):
     a = {
         "full_name": "Alice",
@@ -26,9 +25,7 @@ def test_member_is_scoped_to_treasurer_group(client):
         json=b,
     ).json()
 
-    headers = {
-        "Authorization": f"Bearer {ra['tokens']['access_token']}"
-    }
+    headers = {"Authorization": f"Bearer {ra['tokens']['access_token']}"}
 
     r = client.post(
         "/api/v1/users/members",
@@ -42,9 +39,7 @@ def test_member_is_scoped_to_treasurer_group(client):
 
     assert r.status_code == 200
 
-    headers_b = {
-        "Authorization": f"Bearer {rb['tokens']['access_token']}"
-    }
+    headers_b = {"Authorization": f"Bearer {rb['tokens']['access_token']}"}
 
     members = client.get(
         "/api/v1/users/members",
@@ -52,4 +47,3 @@ def test_member_is_scoped_to_treasurer_group(client):
     ).json()
 
     assert members["total"] == 0
-

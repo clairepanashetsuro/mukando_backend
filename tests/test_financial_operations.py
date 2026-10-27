@@ -1,4 +1,3 @@
-
 from datetime import date
 
 
@@ -16,9 +15,7 @@ def create_treasurer(client, email="treasurer@example.com", group="Test Group"):
     assert response.status_code == 200
     data = response.json()
     return {
-        "headers": {
-            "Authorization": f"Bearer {data['tokens']['access_token']}"
-        },
+        "headers": {"Authorization": f"Bearer {data['tokens']['access_token']}"},
         "user": data["user"],
     }
 
@@ -183,9 +180,7 @@ def test_member_cannot_create_loan(client):
 
     response = client.post(
         "/api/v1/loans",
-        headers={
-            "Authorization": f"Bearer {login.json()['access_token']}"
-        },
+        headers={"Authorization": f"Bearer {login.json()['access_token']}"},
         json={
             "member_id": member["id"],
             "principal": 100,

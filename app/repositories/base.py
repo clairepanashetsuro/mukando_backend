@@ -12,12 +12,7 @@ class BaseRepository:
         filters = filters or []
         count_q = select(func.count()).select_from(self.model).where(*filters)
         total = db.execute(count_q).scalar_one()
-        q = (
-            select(self.model)
-            .where(*filters)
-            .offset((page - 1) * size)
-            .limit(size)
-        )
+        q = select(self.model).where(*filters).offset((page - 1) * size).limit(size)
         items = db.execute(q).scalars().all()
         return items, total
 

@@ -20,11 +20,14 @@ os.environ["JWT_PRIVATE_KEY"] = _private.private_bytes(
     serialization.PrivateFormat.PKCS8,
     serialization.NoEncryption(),
 ).decode()
-os.environ["JWT_PUBLIC_KEY"] = _private.public_key().public_bytes(
-    serialization.Encoding.PEM,
-    serialization.PublicFormat.SubjectPublicKeyInfo,
-).decode()
-
+os.environ["JWT_PUBLIC_KEY"] = (
+    _private.public_key()
+    .public_bytes(
+        serialization.Encoding.PEM,
+        serialization.PublicFormat.SubjectPublicKeyInfo,
+    )
+    .decode()
+)
 
 
 engine = create_engine(
@@ -46,7 +49,7 @@ app.dependency_overrides[get_db] = override_db
 
 @pytest.fixture(autouse=True)
 def db():
-    import app.models  
+    import app.models
 
     Base.metadata.create_all(bind=engine)
     yield

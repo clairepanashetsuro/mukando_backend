@@ -14,9 +14,7 @@ def create_treasurer(client, email="treasurer@example.com"):
     )
     assert response.status_code == 200
     data = response.json()
-    return data, {
-        "Authorization": f"Bearer {data['tokens']['access_token']}"
-    }
+    return data, {"Authorization": f"Bearer {data['tokens']['access_token']}"}
 
 
 def create_member(client, treasurer_headers, email="member@example.com"):
@@ -42,9 +40,7 @@ def login_member(client, email="member@example.com"):
         },
     )
     assert response.status_code == 200
-    return {
-        "Authorization": f"Bearer {response.json()['access_token']}"
-    }
+    return {"Authorization": f"Bearer {response.json()['access_token']}"}
 
 
 def test_refresh_token_returns_new_tokens(client):
@@ -149,9 +145,7 @@ def test_forgot_password_sends_reset_email(client, monkeypatch):
     )
 
     assert response.status_code == 202
-    assert sent_emails == [
-        ("treasurer@example.com", "test-reset-token")
-    ]
+    assert sent_emails == [("treasurer@example.com", "test-reset-token")]
 
 
 def test_reset_password_allows_login_with_new_password(client, monkeypatch):

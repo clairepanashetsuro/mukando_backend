@@ -3,5 +3,8 @@ from app.repositories.base import BaseRepository
 
 
 class ContributionRepository(BaseRepository):
-    def __init__(self): super().__init__(Contribution)
+    def __init__(self):
+        super().__init__(Contribution)
+
+
 contribution_repository = ContributionRepository()

@@ -9,9 +9,10 @@ class Settings(BaseSettings):
     app_name: str = "Mukando API"
     environment: str = "development"
 
-    
     database_url: str = ""
-    database_url_local: str = "postgresql+psycopg://postgres:postgres@localhost:5432/mukando"
+    database_url_local: str = (
+        "postgresql+psycopg://postgres:postgres@localhost:5432/mukando"
+    )
     database_url_production: str = ""
 
     frontend_url: str = "http://localhost:3000"
@@ -34,10 +35,7 @@ class Settings(BaseSettings):
     smtp_password: str = ""
     smtp_from: str = "noreply@example.com"
 
-    model_config = SettingsConfigDict(
-        env_file=".env",
-        extra="ignore"
-    )
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
     @property
     def active_database_url(self) -> str:
@@ -58,8 +56,7 @@ class Settings(BaseSettings):
         if environment == "production":
             if not self.database_url_production:
                 raise RuntimeError(
-                    "DATABASE_URL_PRODUCTION is required when "
-                    "ENVIRONMENT=production."
+                    "DATABASE_URL_PRODUCTION is required when ENVIRONMENT=production."
                 )
 
             return self.database_url_production
@@ -70,7 +67,6 @@ class Settings(BaseSettings):
 
             return self.database_url_local
 
-        
         return self.database_url_local
 
     @staticmethod
@@ -97,19 +93,13 @@ class Settings(BaseSettings):
         if self.jwt_private_key:
             return self._normalise_key(self.jwt_private_key)
 
-        return self._read_key_file(
-            self.jwt_private_key_path,
-            "JWT private key"
-        )
+        return self._read_key_file(self.jwt_private_key_path, "JWT private key")
 
     def public_key(self) -> str:
         if self.jwt_public_key:
             return self._normalise_key(self.jwt_public_key)
 
-        return self._read_key_file(
-            self.jwt_public_key_path,
-            "JWT public key"
-        )
+        return self._read_key_file(self.jwt_public_key_path, "JWT public key")
 
 
 settings = Settings()

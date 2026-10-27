@@ -37,7 +37,11 @@ def test_treasurer_can_view_own_group(client):
     response = client.get("/api/v1/groups/me", headers=headers)
 
     assert response.status_code == 200
-    assert response.json()["id"] == signup["user"]["group_id"] if "user" in signup else response.json()["id"] > 0
+    assert (
+        response.json()["id"] == signup["user"]["group_id"]
+        if "user" in signup
+        else response.json()["id"] > 0
+    )
     assert response.json()["name"] == "Test Group"
     assert response.json()["weekly_contribution"] == 100
 
@@ -93,9 +97,7 @@ def test_member_cannot_update_group(client):
         },
     )
     assert login.status_code == 200
-    member_headers = {
-        "Authorization": f"Bearer {login.json()['access_token']}"
-    }
+    member_headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
 
     response = client.patch(
         "/api/v1/groups/me",
@@ -210,9 +212,7 @@ def test_member_cannot_list_members(client):
         },
     )
     assert login.status_code == 200
-    member_headers = {
-        "Authorization": f"Bearer {login.json()['access_token']}"
-    }
+    member_headers = {"Authorization": f"Bearer {login.json()['access_token']}"}
 
     response = client.get("/api/v1/users/members", headers=member_headers)
 
@@ -220,8 +220,12 @@ def test_member_cannot_list_members(client):
 
 
 def test_member_cannot_access_another_groups_member(client):
-    first_headers, _ = create_treasurer(client, "first-treasurer@example.com", "First Group")
-    second_headers, _ = create_treasurer(client, "second-treasurer@example.com", "Second Group")
+    first_headers, _ = create_treasurer(
+        client, "first-treasurer@example.com", "First Group"
+    )
+    second_headers, _ = create_treasurer(
+        client, "second-treasurer@example.com", "Second Group"
+    )
     member = create_member(client, second_headers, "second-member@example.com")
 
     response = client.get(

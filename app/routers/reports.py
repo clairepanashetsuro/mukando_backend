@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import func, select
 
@@ -35,13 +34,17 @@ def member_report(db: DB, user: CurrentUser):
         ).scalar_one()
     )
 
-    loans = db.execute(
-        select(Loan).where(
-            Loan.member_id == user.id,
-            Loan.group_id == user.group_id,
-            Loan.status == LoanStatus.ACTIVE,
+    loans = (
+        db.execute(
+            select(Loan).where(
+                Loan.member_id == user.id,
+                Loan.group_id == user.group_id,
+                Loan.status == LoanStatus.ACTIVE,
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
 
     outstanding = sum(
         (loan_balance(db, loan) for loan in loans),
@@ -77,12 +80,16 @@ def summary(db: DB, user: CurrentUser):
         ).scalar_one()
     )
 
-    active_loans = db.execute(
-        select(Loan).where(
-            Loan.group_id == user.group_id,
-            Loan.status == LoanStatus.ACTIVE,
+    active_loans = (
+        db.execute(
+            select(Loan).where(
+                Loan.group_id == user.group_id,
+                Loan.status == LoanStatus.ACTIVE,
+            )
         )
-    ).scalars().all()
+        .scalars()
+        .all()
+    )
 
     outstanding = sum(
         (float(loan_balance(db, loan)) for loan in active_loans),
@@ -91,7 +98,9 @@ def summary(db: DB, user: CurrentUser):
 
     members = int(
         db.execute(
-            select(func.count()).select_from(User).where(
+            select(func.count())
+            .select_from(User)
+            .where(
                 User.group_id == user.group_id,
                 User.role == UserRole.MEMBER,
             )

@@ -29,8 +29,6 @@ def current_user(
             headers={"WWW-Authenticate": "Bearer"},
         ) from None
 
-    
-
     user = user_repository.get(db, user_id)
 
     if not user or not user.is_active:

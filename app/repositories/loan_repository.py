@@ -3,5 +3,8 @@ from app.repositories.base import BaseRepository
 
 
 class LoanRepository(BaseRepository):
-    def __init__(self): super().__init__(Loan)
+    def __init__(self):
+        super().__init__(Loan)
+
+
 loan_repository = LoanRepository()

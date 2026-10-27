@@ -83,19 +83,10 @@ def members(
 
     total = len(db.execute(q).scalars().all())
 
-    items = (
-        db.execute(
-            q.offset((page - 1) * size).limit(size)
-        )
-        .scalars()
-        .all()
-    )
+    items = db.execute(q.offset((page - 1) * size).limit(size)).scalars().all()
 
     return {
-        "items": [
-            UserRead.model_validate(member)
-            for member in items
-        ],
+        "items": [UserRead.model_validate(member) for member in items],
         "total": total,
         "page": page,
         "size": size,
@@ -117,11 +108,7 @@ def get_member(
 
     obj = db.get(User, member_id)
 
-    if (
-        not obj
-        or obj.group_id != user.group_id
-        or obj.role != UserRole.MEMBER
-    ):
+    if not obj or obj.group_id != user.group_id or obj.role != UserRole.MEMBER:
         raise HTTPException(
             status_code=404,
             detail="Member not found",
@@ -145,11 +132,7 @@ def update_member(
 
     obj = db.get(User, member_id)
 
-    if (
-        not obj
-        or obj.group_id != user.group_id
-        or obj.role != UserRole.MEMBER
-    ):
+    if not obj or obj.group_id != user.group_id or obj.role != UserRole.MEMBER:
         raise HTTPException(
             status_code=404,
             detail="Member not found",
@@ -172,11 +155,7 @@ def delete_member(
 
     obj = db.get(User, member_id)
 
-    if (
-        not obj
-        or obj.group_id != user.group_id
-        or obj.role != UserRole.MEMBER
-    ):
+    if not obj or obj.group_id != user.group_id or obj.role != UserRole.MEMBER:
         raise HTTPException(
             status_code=404,
             detail="Member not found",

@@ -1,4 +1,3 @@
-
 def test_treasurer_signup_and_login(client):
     payload = {
         "full_name": "Treasurer One",
@@ -28,7 +27,6 @@ def test_treasurer_signup_and_login(client):
         },
     )
     assert r.status_code == 200
-
 
 
 def test_login_rejects_unknown_user(client):
@@ -90,5 +88,3 @@ def test_protected_endpoint_rejects_invalid_token(client):
     )
 
     assert response.status_code == 401
-
-

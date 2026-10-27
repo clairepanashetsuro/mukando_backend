@@ -3,5 +3,8 @@ from app.repositories.base import BaseRepository
 
 
 class PasswordResetTokenRepository(BaseRepository):
-    def __init__(self): super().__init__(PasswordResetToken)
+    def __init__(self):
+        super().__init__(PasswordResetToken)
+
+
 password_reset_token_repository = PasswordResetTokenRepository()

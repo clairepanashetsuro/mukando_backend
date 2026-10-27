@@ -7,11 +7,13 @@ from database import Base
 
 
 class Contribution(Base):
-    __tablename__="contributions"
-    id: Mapped[int]=mapped_column(primary_key=True)
-    member_id: Mapped[int]=mapped_column(ForeignKey("users.id"), index=True)
-    group_id: Mapped[int]=mapped_column(ForeignKey("groups.id"), index=True)
-    amount: Mapped[float]=mapped_column(Numeric(12,2))
-    paid_at: Mapped[date]=mapped_column(Date)
-    recorded_by: Mapped[int]=mapped_column(ForeignKey("users.id"))
-    created_at: Mapped[datetime]=mapped_column(DateTime(timezone=True), default=datetime.utcnow)
+    __tablename__ = "contributions"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    member_id: Mapped[int] = mapped_column(ForeignKey("users.id"), index=True)
+    group_id: Mapped[int] = mapped_column(ForeignKey("groups.id"), index=True)
+    amount: Mapped[float] = mapped_column(Numeric(12, 2))
+    paid_at: Mapped[date] = mapped_column(Date)
+    recorded_by: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), default=datetime.utcnow
+    )

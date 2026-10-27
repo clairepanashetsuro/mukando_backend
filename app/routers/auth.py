@@ -1,4 +1,3 @@
-
 from fastapi import APIRouter, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 
@@ -132,4 +131,3 @@ def reset(
         data.token,
         data.new_password,
     )
-

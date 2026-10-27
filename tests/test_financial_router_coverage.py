@@ -1,7 +1,9 @@
 from datetime import date, timedelta
 
 
-def create_treasurer(client, email="router.treasurer@example.com", group="Router Test Group"):
+def create_treasurer(
+    client, email="router.treasurer@example.com", group="Router Test Group"
+):
     response = client.post(
         "/api/v1/auth/signup",
         json={
@@ -15,9 +17,7 @@ def create_treasurer(client, email="router.treasurer@example.com", group="Router
     assert response.status_code == 200
     data = response.json()
     return {
-        "headers": {
-            "Authorization": f"Bearer {data['tokens']['access_token']}"
-        },
+        "headers": {"Authorization": f"Bearer {data['tokens']['access_token']}"},
         "user": data["user"],
     }
 
@@ -45,9 +45,7 @@ def login_member(client, member):
         },
     )
     assert response.status_code == 200
-    return {
-        "Authorization": f"Bearer {response.json()['access_token']}"
-    }
+    return {"Authorization": f"Bearer {response.json()['access_token']}"}
 
 
 def create_contribution(client, headers, member_id, amount=500):
@@ -175,12 +173,8 @@ def test_contribution_missing_record_returns_404(client):
 def test_member_only_sees_own_contributions(client):
     treasurer = create_treasurer(client)
     headers = treasurer["headers"]
-    first_member = create_member(
-        client, headers, "first.router.member@example.com"
-    )
-    second_member = create_member(
-        client, headers, "second.router.member@example.com"
-    )
+    first_member = create_member(client, headers, "first.router.member@example.com")
+    second_member = create_member(client, headers, "second.router.member@example.com")
 
     create_contribution(client, headers, first_member["id"], 100)
     create_contribution(client, headers, second_member["id"], 200)
@@ -338,12 +332,8 @@ def test_loan_missing_record_returns_404(client):
 def test_member_only_sees_own_loans(client):
     treasurer = create_treasurer(client)
     headers = treasurer["headers"]
-    first_member = create_member(
-        client, headers, "first.loan.member@example.com"
-    )
-    second_member = create_member(
-        client, headers, "second.loan.member@example.com"
-    )
+    first_member = create_member(client, headers, "first.loan.member@example.com")
+    second_member = create_member(client, headers, "second.loan.member@example.com")
 
     create_contribution(client, headers, first_member["id"], 1000)
     create_contribution(client, headers, second_member["id"], 1000)
@@ -490,9 +480,7 @@ def test_repayment_missing_record_returns_404(client):
 def test_member_only_sees_own_repayments(client):
     treasurer = create_treasurer(client)
     headers = treasurer["headers"]
-    first_member = create_member(
-        client, headers, "first.repayment.member@example.com"
-    )
+    first_member = create_member(client, headers, "first.repayment.member@example.com")
     second_member = create_member(
         client, headers, "second.repayment.member@example.com"
     )
@@ -502,9 +490,7 @@ def test_member_only_sees_own_repayments(client):
     first_loan = create_loan(client, headers, first_member["id"], 200)
     second_loan = create_loan(client, headers, second_member["id"], 200)
     create_repayment(client, headers, first_loan["id"], 25)
-    other_repayment = create_repayment(
-        client, headers, second_loan["id"], 35
-    )
+    other_repayment = create_repayment(client, headers, second_loan["id"], 35)
 
     member_headers = login_member(client, first_member)
 
@@ -576,9 +562,7 @@ def test_financial_records_are_isolated_between_groups(client):
     )
     create_contribution(client, first_headers, first_member["id"], 500)
     first_loan = create_loan(client, first_headers, first_member["id"])
-    first_repayment = create_repayment(
-        client, first_headers, first_loan["id"]
-    )
+    first_repayment = create_repayment(client, first_headers, first_loan["id"])
 
     contribution = client.get(
         "/api/v1/contributions/1",
