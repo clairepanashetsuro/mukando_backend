@@ -1,5 +1,8 @@
+
 from pathlib import Path
 
+import jwt
+from cryptography.hazmat.primitives import serialization
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parents[2]
@@ -35,28 +38,20 @@ class Settings(BaseSettings):
     smtp_password: str = ""
     smtp_from: str = "noreply@example.com"
 
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        extra="ignore",
+    )
 
     @property
     def active_database_url(self) -> str:
-        """
-        Select the database according to the current environment.
-
-        Development:
-            Use the local PostgreSQL database.
-
-        Production:
-            Use the production PostgreSQL database.
-
-        Testing:
-            Use DATABASE_URL if explicitly provided.
-        """
         environment = self.environment.lower().strip()
 
         if environment == "production":
             if not self.database_url_production:
                 raise RuntimeError(
-                    "DATABASE_URL_PRODUCTION is required when ENVIRONMENT=production."
+                    "DATABASE_URL_PRODUCTION is required "
+                    "when ENVIRONMENT=production."
                 )
 
             return self.database_url_production
@@ -71,7 +66,7 @@ class Settings(BaseSettings):
 
     @staticmethod
     def _normalise_key(value: str) -> str:
-        return value.replace("\\n", "\n")
+        return value.replace("\\n", "\n").strip()
 
     def _read_key_file(self, configured_path: str, label: str) -> str:
         path = Path(configured_path)
@@ -80,26 +75,80 @@ class Settings(BaseSettings):
             path = BASE_DIR / path
 
         try:
-            return path.read_text(encoding="utf-8")
-
+            return self._normalise_key(
+                path.read_text(encoding="utf-8")
+            )
         except FileNotFoundError as exc:
             raise RuntimeError(
                 f"{label} not configured. Set the corresponding "
                 f"environment variable or create the key file at {path}. "
-                f"See backend/README.md."
+                "See backend/README.md."
             ) from exc
 
     def private_key(self) -> str:
         if self.jwt_private_key:
             return self._normalise_key(self.jwt_private_key)
 
-        return self._read_key_file(self.jwt_private_key_path, "JWT private key")
+        return self._read_key_file(
+            self.jwt_private_key_path,
+            "JWT private key",
+        )
 
     def public_key(self) -> str:
         if self.jwt_public_key:
             return self._normalise_key(self.jwt_public_key)
 
-        return self._read_key_file(self.jwt_public_key_path, "JWT public key")
+        return self._read_key_file(
+            self.jwt_public_key_path,
+            "JWT public key",
+        )
 
 
 settings = Settings()
+
+
+def diagnose_jwt_configuration() -> None:
+    try:
+        if settings.jwt_algorithm != "RS256":
+            print("JWT diagnostic: expected RS256.")
+
+        private_key = settings.private_key()
+        public_key = settings.public_key()
+
+        private_obj = serialization.load_pem_private_key(
+            private_key.encode(),
+            password=None,
+        )
+        public_obj = serialization.load_pem_public_key(
+            public_key.encode(),
+        )
+
+        keys_match = (
+            private_obj.public_key().public_numbers()
+            == public_obj.public_numbers()
+        )
+
+        print("JWT private key parses: OK")
+        print("JWT public key parses: OK")
+        print("JWT keys match:", keys_match)
+
+        if not keys_match:
+            return
+
+        jwt.encode(
+            {"sub": "diagnostic"},
+            private_key,
+            algorithm=settings.jwt_algorithm,
+        )
+        print("JWT signing test: OK")
+
+    except Exception as exc:
+        print(
+            "JWT diagnostic failed:",
+            type(exc).__name__,
+            str(exc),
+        )
+
+
+if settings.environment.lower().strip() == "production":
+    diagnose_jwt_configuration()
