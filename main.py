@@ -1,3 +1,4 @@
+
 from collections import defaultdict, deque
 from time import monotonic
 
@@ -35,7 +36,9 @@ def parse_rate(value: str) -> tuple[int, int]:
         return limit, seconds
 
     except (ValueError, KeyError) as exc:
-        raise RuntimeError("RATE_LIMIT must look like '100/minute'.") from exc
+        raise RuntimeError(
+            "RATE_LIMIT must look like '100/minute'."
+        ) from exc
 
 
 _LIMIT, _WINDOW = parse_rate(settings.rate_limit)
@@ -43,12 +46,14 @@ _hits = defaultdict(deque)
 
 
 def rate_limit(request: Request):
-    if request.method == "OPTIONS" or request.url.path.startswith(
-        ("/docs", "/openapi.json")
+    if (
+        request.method == "OPTIONS"
+        or request.url.path.startswith(("/docs", "/openapi.json"))
     ):
         return
 
-    key = f"{request.client.host if request.client else 'unknown'}:{request.url.path}"
+    client_host = request.client.host if request.client else "unknown"
+    key = f"{client_host}:{request.url.path}"
 
     now = monotonic()
     queue = _hits[key]
@@ -64,8 +69,6 @@ def rate_limit(request: Request):
 
     queue.append(now)
 
-    return
-
 
 app = FastAPI(
     title=settings.app_name,
@@ -74,7 +77,9 @@ app = FastAPI(
 )
 
 configured_origins = [
-    origin.strip() for origin in settings.frontend_url.split(",") if origin.strip()
+    origin.strip().rstrip("/")
+    for origin in settings.frontend_url.split(",")
+    if origin.strip()
 ]
 
 allowed_origins = list(
@@ -82,6 +87,7 @@ allowed_origins = list(
         configured_origins
         + [
             "http://localhost:3000",
+            "http://127.0.0.1:3000",
         ]
     )
 )
