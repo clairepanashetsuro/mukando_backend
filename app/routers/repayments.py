@@ -2,6 +2,7 @@ from math import ceil
 
 from fastapi import APIRouter, HTTPException, Query
 from sqlalchemy import select
+from sqlalchemy import func, select
 
 from app.dependencies import DB, CurrentUser
 from app.models.repayment import Repayment
@@ -19,12 +20,14 @@ def create_repayment(data: RepaymentCreate, db: DB, user: CurrentUser):
     return create(db, user, data)
 
 
+
 @router.get("", response_model=dict)
 def list_repayments(
     db: DB,
     user: CurrentUser,
     page: int = Query(1, ge=1),
     size: int = Query(20, ge=1, le=100),
+    loan_id: int | None = Query(default=None, ge=1),
 ):
     q = (
         select(Repayment)
@@ -35,16 +38,28 @@ def list_repayments(
     if user.role == UserRole.MEMBER:
         q = q.where(Repayment.member_id == user.id)
 
-    total = len(db.execute(q).scalars().all())
-    items = db.execute(q.offset((page - 1) * size).limit(size)).scalars().all()
+    if loan_id is not None:
+        q = q.where(Repayment.loan_id == loan_id)
+
+    total = db.execute(
+        select(func.count()).select_from(q.subquery())
+    ).scalar_one()
+
+    items = db.execute(
+        q.offset((page - 1) * size).limit(size)
+    ).scalars().all()
 
     return {
-        "items": [RepaymentRead.model_validate(item).model_dump() for item in items],
+        "items": [
+            RepaymentRead.model_validate(item).model_dump()
+            for item in items
+        ],
         "total": total,
         "page": page,
         "size": size,
         "pages": ceil(total / size) if total else 0,
     }
+
 
 
 @router.get("/{repayment_id}", response_model=RepaymentRead)
